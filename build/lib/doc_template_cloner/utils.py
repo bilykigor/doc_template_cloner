@@ -403,9 +403,10 @@ def clone_relation(relation_bbox_source,
                 relation_bbox_target[3] = bottom_edge              
                 variable_many_boxes_target.append(variable_many_bbox_target)
                 
+                #looking for labeled boxes
                 if labeled_boxes_source:
                     labeled_boxes_source_list = [eval(x) for x in labeled_boxes_source.keys()]
-                    intersected_labeled_boxes_list = find_intersected(variable_many_bbox_source, labeled_boxes_source_list,0.1)
+                    intersected_labeled_boxes_list = find_intersected(variable_in_relation_source, labeled_boxes_source_list,0.1)
                 
                     for labeled_box in intersected_labeled_boxes_list:
                         labeled_box = labeled_box[0]
@@ -422,12 +423,13 @@ def clone_relation(relation_bbox_source,
     print('variable_one_bbox_source:',variable_one_bbox_source)
     for variable_one_bbox in variable_one_bbox_source:
         variable_one_bbox = variable_one_bbox[0]
+        variable_one_bbox_in_relation = get_intersection(variable_one_bbox,relation_bbox_source)
         variable_one_bbox_target = relative_box(static_anchor_target,relative_box(static_anchor_source,variable_one_bbox),is_relative=False) 
         variable_one_boxes_target.append(variable_one_bbox_target)  
         
         if labeled_boxes_source:
             labeled_boxes_source_list = [eval(x) for x in labeled_boxes_source.keys()]
-            intersected_labeled_boxes_list = find_intersected(variable_one_bbox, labeled_boxes_source_list,0.1)
+            intersected_labeled_boxes_list = find_intersected(variable_one_bbox_in_relation, labeled_boxes_source_list,0.1)
             
             print('intersected_labeled_boxes_list:', intersected_labeled_boxes_list)
             for labeled_box in intersected_labeled_boxes_list:
