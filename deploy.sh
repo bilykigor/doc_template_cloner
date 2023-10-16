@@ -1,4 +1,4 @@
-python3 -m build
+python3.8 -m build
 twine check dist/*
 twine upload --verbose dist/* 
 rm -rf dist
