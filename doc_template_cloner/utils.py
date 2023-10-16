@@ -1,3 +1,4 @@
+import os
 from typing import List, Tuple,Union
 
 from difflib import SequenceMatcher
@@ -10,6 +11,8 @@ import torchvision.ops.boxes as bops
 
 from PIL import Image
 from matplotlib import pyplot as plt
+
+os.environ['TESSDATA_PREFIX']=os.getcwd()
 
 
 def find_intersected_boxes(target_box: Tuple[int, int, int, int], 
