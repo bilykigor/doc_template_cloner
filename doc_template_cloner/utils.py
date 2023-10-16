@@ -12,8 +12,7 @@ import torchvision.ops.boxes as bops
 from PIL import Image
 from matplotlib import pyplot as plt
 
-os.environ['TESSDATA_PREFIX']=os.getcwd()
-
+#os.environ['TESSDATA_PREFIX']=os.getcwd()
 
 def find_intersected_boxes(target_box: Tuple[int, int, int, int], 
                            boxes: List[Tuple[int, int, int, int]], 
@@ -167,7 +166,8 @@ def find_subboxes_by_axis(axis: str,
 
 def find_segment(static_crop: Image, 
                  target_image: Image, 
-                 threshold = 0.85)->Union[Tuple[int, int, int, int], None]:
+                 threshold = 0.85,
+                 text_threshold = 0.6)->Union[Tuple[int, int, int, int], None]:
     """Finds static_crop image in target_image."""
     
     static_crop_cv2 = cv2.cvtColor(np.array(static_crop), cv2.COLOR_RGB2BGR)
@@ -220,8 +220,9 @@ def find_segment(static_crop: Image,
     
     s = SequenceMatcher(None, static_crop_text, static_anchor_target_text)
     
-    if s.ratio()<0.8:
-       return None
+    if s.ratio()<text_threshold:
+        print(f'Text not match: {static_crop_text} -> {static_anchor_target_text}', s.ratio())
+        return None
            
     return found_box
 
@@ -253,7 +254,7 @@ def find_bottom_edge(source_image: Image,
     """Finds bottom edge for boxes with variable size."""
     
     down_static_anchor_source = find_subboxes_by_axis('y', variable_many_bbox_source, statis_bboxes_source, threadhold=0.5)
-    down_static_anchor_source = [x for x in down_static_anchor_source if variable_many_bbox_source[3]<=x[1]+10]
+    down_static_anchor_source = [x for x in down_static_anchor_source if x[1]>=variable_many_bbox_source[3]-10] #below boxes
     if down_static_anchor_source:
         down_static_anchor_source = down_static_anchor_source[0]
     
@@ -283,6 +284,7 @@ def find_subimages(source_image: Image,
         static_anchor_target = find_segment(static_crop, target_image, threshold = threshold)
         
         if static_anchor_target is None:
+            print('static_anchor_source NOT FOUND', static_anchor_source)
             continue
         
         print('static_anchor_source->static_anchor_target', static_anchor_source, static_anchor_target)
@@ -361,6 +363,7 @@ def clone_relation(source_image: Image,
                     bottom_edge = find_bottom_edge(source_image,target_image,variable_many_bbox_source,variable_one_bboxes_source)
                     
                     if bottom_edge is None:
+                        print('bottom_edge not found')
                         bottom_edge = variable_many_bbox_target[3] + 100
                 
                 print('bottom_edge found', bottom_edge)        
@@ -430,18 +433,25 @@ def clone_labels(source_image,
     variable_many_boxes = []
     labeled_boxes = []
     
-    statis_bboxes_source_intersected=[]
+    statis_bboxes_source_intersected = []
+    statis_bboxes_source_separate = []
     for statis_bbox in statis_bboxes_source:
+        separate = True
         for relation_bbox in relation_bboxes_source:
             intersected = get_intersection(statis_bbox,relation_bbox)
             if intersected:
+                separate = False
                 statis_bboxes_source_intersected.append(intersected)
+        if separate:
+            statis_bboxes_source_separate.append(statis_bbox)
                 
     static_boxes_target = find_subimages(source_image, 
                                         target_image,
                                         statis_bboxes_source_intersected,
                                         threshold=threshold)
 
+    statis_bboxes_source_intersected.extend(statis_bboxes_source_separate)
+    
     print('Clonning relation')
     for relation_bbox_source in relation_bboxes_source:
         print('----------------------------------------')
