@@ -6,6 +6,12 @@ from glob import glob
 
 from setuptools import find_packages, setup
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+def parse_requirements(file_content):
+    lines = file_content.splitlines()
+    return [line.strip() for line in lines if line and not line.startswith("#")]
+
 
 def read(fname):
     """
@@ -15,15 +21,13 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-# Declare minimal set for installation
-required_packages = [
-    #"boto3>=1.20.21,<2.0",
-    "pandas",
-]
+with open(os.path.join(HERE, "requirements.txt")) as f:
+    requirements = parse_requirements(f.read())
+    
 
 setup(
     name="doc_template_cloner",
-    version="0.1.4",
+    version="0.2.0",
     description="Custom lib to clone lebaling from one image to another similar.",
     long_description_content_type="text/markdown",
     long_description=read('README.md'),
@@ -46,5 +50,5 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
-    install_requires=required_packages
+    install_requires=requirements
 )

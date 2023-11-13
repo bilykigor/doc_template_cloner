@@ -1,0 +1,2 @@
+pandas
+doc2graph==2.2.5
