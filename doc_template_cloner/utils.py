@@ -568,6 +568,69 @@ def clone_labels(source_image,
     return relation_boxes, static_boxes_target, variable_one_boxes, variable_many_boxes, labeled_boxes
 
 
+def find_segment_with_graph(static_anchor_source, 
+                            source_word_boxes,
+                            target_word_boxes,
+                            pairwise_distance,
+                            threshold = 0.5,
+                            text_threshold = 0.6,
+                            is_textbox = True):
+    
+    # if not is_textbox:
+    #     static_anchor_source_box = find_intersected_boxes(static_anchor_source, source_word_boxes['boxes'], 0.7)
+        
+    #     if len(static_anchor_source_box)>1:
+    #         raise #we dont expect to have multiple boxes intersected with static_anchor_source
+    #     if static_anchor_source_box:
+    #         static_anchor_source_box = static_anchor_source[0]
+    #     else: 
+    #         print('segment not found', static_anchor_source)
+    #         return None
+    # else:
+    static_anchor_source_box = static_anchor_source
+    
+    ix=-1
+    for ix, box in enumerate(source_word_boxes['boxes']):
+        if box == static_anchor_source_box:
+            break
+        
+    # print(box)
+    # print(static_anchor_source_box)
+    # print(ix)
+    # print('-----------------------')
+    
+    if ix>=0:
+        d = min(pairwise_distance[ix])
+        target_ix = np.argmin(pairwise_distance[ix])    
+        
+        #print(ix, target_ix)
+            
+        source_text = source_word_boxes['words'][ix]
+        target_text = target_word_boxes['words'][target_ix]
+        
+        
+        #print(f'{source_text}-->{target_text}')
+            
+        s = SequenceMatcher(None, source_text, target_text)
+    
+        if s.ratio()<text_threshold:
+            #print(f'Text not match: {source_text} -> {target_text}', s.ratio())
+            return None
+        else:
+            static_anchor_target = target_word_boxes['boxes'][target_ix]
+            print('Found segment', 
+                    d, 
+                    source_word_boxes['words'][ix], 
+                    '--->',
+                    target_word_boxes['words'][target_ix], 
+                    static_anchor_source,
+                    static_anchor_target, 
+                    )
+            return static_anchor_target    
+            
+            
+    return None
+
 def clone_relation_with_graphs(
                             source_image, 
                             target_image, 
