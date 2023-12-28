@@ -709,7 +709,7 @@ def clone_relation_with_graphs(
                             variable_many_bbox_source,
                             statis_bboxes_source)
                 
-                if bottom_edge is None:
+                if (bottom_edge is None) or (bottom_edge<=variable_many_bbox_target[3]):
                     print('bottom_edge not found')
                     bottom_edge = find_bottom_edge_with_graph(
                             source_image, 

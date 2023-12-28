@@ -27,7 +27,7 @@ with open(os.path.join(HERE, "requirements.txt")) as f:
 
 setup(
     name="doc_template_cloner",
-    version="0.2.2",
+    version="0.2.3",
     description="Custom lib to clone lebaling from one image to another similar.",
     long_description_content_type="text/markdown",
     long_description=read('README.md'),
