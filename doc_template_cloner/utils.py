@@ -46,6 +46,26 @@ def find_intersected_boxes(target_box: Tuple[int, int, int, int],
     return matched_boxes
 
 
+def get_intersection(box1: Tuple[int, int, int, int],
+                     box2: Tuple[int, int, int, int])->Union[Tuple[int, int, int, int], None]:
+    """Returns intersection of two rectangles."""
+    if box1[3]<=box2[1]:
+        return None
+    
+    if box2[3]<=box1[1]:
+        return None
+    
+    if box1[2]<=box2[0]:
+        return None
+    
+    if box2[2]<=box1[0]:
+        return None
+    
+    result = [max(box1[0],box2[0]),max(box1[1],box2[1]),min(box1[2],box2[2]),min(box1[3],box2[3])]
+    
+    return result
+
+
 def get_relative_boxes_orientation(anchor: Tuple[int, int, int, int],
                                    box: Tuple[int, int, int, int])->List:
     """Categorizes two boxes relative orientation.
@@ -236,91 +256,7 @@ def find_segment(static_crop: Image,
            
     return found_box
 
-
-def find_segment_with_graph(static_anchor_source: Tuple[int, int, int, int], 
-                            source_word_boxes,
-                            target_word_boxes,
-                            pairwise_distance,
-                            threshold = 0.5,
-                            text_threshold = 0.8,
-                            is_textbox = False)->Union[Tuple[int, int, int, int], None]:
-    
-    if not is_textbox:
-        static_anchor_source_box = find_intersected_boxes(static_anchor_source, source_word_boxes['boxes'], 0.7)
-        
-        if len(static_anchor_source_box)>1:
-            raise #we dont expect to have multiple boxes intersected with static_anchor_source
-        
-        if static_anchor_source_box:
-            static_anchor_source_box = static_anchor_source_box[0][0]
-        else: 
-            print('segment not found', static_anchor_source)
-            return None
-    else:
-        static_anchor_source_box = static_anchor_source
-    
-    ix=-1
-    for ix, box in enumerate(source_word_boxes['boxes']):
-        if box == static_anchor_source_box:
-            break
-    
-    #print('***********')
-    #print('static_anchor_source_box',static_anchor_source_box)
-    
-    if ix<0:
-        return None
-        
-    d = min(pairwise_distance[ix])
-    target_ix = np.argmin(pairwise_distance[ix])  
-        
-    source_text = source_word_boxes['words'][ix]
-    target_text = target_word_boxes['words'][target_ix]
-    
-    #print(source_text,target_text, ix, target_ix)
-    
-    s = SequenceMatcher(None, source_text, target_text)
-
-    if s.ratio()<text_threshold:
-        print(f'Text not match: {source_text} -> {target_text}', s.ratio())
-        return None
-    else:
-    #if d<threshold:
-        static_anchor_target = target_word_boxes['boxes'][target_ix]
-        
-        if not is_textbox:
-            static_anchor_target = relative_box(static_anchor_target,relative_box(static_anchor_source_box,static_anchor_source),is_relative=False)
-        
-        print('GRAPH', source_word_boxes['words'][ix],'--->',target_word_boxes['words'][target_ix])
-        
-        # print('static_anchor_source->static_anchor_target', 
-        #         d, 
-        #         static_anchor_source,
-        #         static_anchor_target, 
-        #         )
-        return static_anchor_target
-    #else:
-    #    print('segment NOT FOUND',  d, source_word_boxes['words'][ix], source_word_boxes['boxes'][ix])
-                     
-
-def get_intersection(box1: Tuple[int, int, int, int],
-                     box2: Tuple[int, int, int, int])->Union[Tuple[int, int, int, int], None]:
-    """Returns intersection of two rectangles."""
-    if box1[3]<=box2[1]:
-        return None
-    
-    if box2[3]<=box1[1]:
-        return None
-    
-    if box1[2]<=box2[0]:
-        return None
-    
-    if box2[2]<=box1[0]:
-        return None
-    
-    result = [max(box1[0],box2[0]),max(box1[1],box2[1]),min(box1[2],box2[2]),min(box1[3],box2[3])]
-    
-    return result
-
+               
 
 def find_bottom_edge(source_image: Image,
                      target_image: Image,
@@ -721,7 +657,7 @@ def clone_relation_with_graphs(
                             variable_many_bbox_source,
                             variable_one_bboxes_source)
                     
-                    if bottom_edge is None:
+                    if (bottom_edge is None) or (bottom_edge<=variable_many_bbox_target[3]):
                         print('bottom_edge not found')
                         bottom_edge = variable_many_bbox_target[3] + 100
                 
